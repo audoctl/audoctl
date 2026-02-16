@@ -1,3 +1,5 @@
+![Go](https://img.shields.io/badge/go-1.26-blue)
+
 # audoctl
 
 > Control plane for AI agents.
