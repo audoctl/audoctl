@@ -1,3 +1,6 @@
+![CI](https://github.com/audoctl/audoctl/actions/workflows/ci.yml/badge.svg)
+![Release](https://img.shields.io/github/v/release/audoctl/audoctl)
+![License](https://img.shields.io/github/license/audoctl/audoctl)
 ![Go](https://img.shields.io/badge/go-1.26-blue)
 
 # audoctl
