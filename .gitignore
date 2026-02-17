@@ -16,6 +16,21 @@
 coverage.*
 *.coverprofile
 profile.cov
+temp
+
+# Build directories
+bin/
+dist/
+build/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
@@ -26,7 +41,20 @@ go.work.sum
 
 # env file
 .env
+.*.env
 
 # Editor/IDE
-# .idea/
-# .vscode/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
