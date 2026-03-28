@@ -47,53 +47,13 @@ func LoadConfig(ctx context.Context) (*Config, error) {
 			return nil, err
 		}
 	}
-	envConfig := &Config{}
 	// 3. Run envconfig again (overwrite YAML values with ENV values)
 	// sethvargo/go-envconfig keeps existing struct values, only updates with env vars.
-	if err := envconfig.Process(ctx, envConfig); err != nil {
+	if err := envconfig.Process(ctx, cfg); err != nil {
 		return nil, err
 	}
 
-	cfg = combineConfig(cfg, envConfig)
-
 	return cfg, nil
-}
-
-func combineConfig(cfg *Config, envConfig *Config) *Config {
-	if envConfig.Database.Driver != "" {
-		cfg.Database.Driver = envConfig.Database.Driver
-	}
-	if envConfig.Database.Host != "" {
-		cfg.Database.Host = envConfig.Database.Host
-	}
-	if envConfig.Database.Port != 0 {
-		cfg.Database.Port = envConfig.Database.Port
-	}
-	if envConfig.Database.User != "" {
-		cfg.Database.User = envConfig.Database.User
-	}
-	if envConfig.Database.Password != "" {
-		cfg.Database.Password = envConfig.Database.Password
-	}
-	if envConfig.Database.Name != "" {
-		cfg.Database.Name = envConfig.Database.Name
-	}
-	if envConfig.Database.SSLMode != "" {
-		cfg.Database.SSLMode = envConfig.Database.SSLMode
-	}
-	if envConfig.Database.SSLCert != "" {
-		cfg.Database.SSLCert = envConfig.Database.SSLCert
-	}
-	if envConfig.Database.SSLKey != "" {
-		cfg.Database.SSLKey = envConfig.Database.SSLKey
-	}
-	if envConfig.Database.SSLRootCert != "" {
-		cfg.Database.SSLRootCert = envConfig.Database.SSLRootCert
-	}
-	if envConfig.Database.DSN != "" {
-		cfg.Database.DSN = envConfig.Database.DSN
-	}
-	return cfg
 }
 
 func GetEnv() string {

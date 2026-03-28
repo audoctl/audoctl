@@ -65,6 +65,7 @@ type HTTPServer struct {
 	EnableHealthCheck    bool   `yaml:"enable_health_check" env:"ENABLE_HEALTH_CHECK,default=true"`
 	HealthCheckPath      string `yaml:"health_check_path" env:"HEALTH_CHECK_PATH,default=/health"`
 	EnablePprofEndpoints bool   `yaml:"enable_pprof" env:"ENABLE_PPROF,default=false"`
+	EnableSwagger        bool   `yaml:"enable_swagger" env:"ENABLE_SWAGGER,default=false"`
 }
 
 // CORS contains CORS configuration

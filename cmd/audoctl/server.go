@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/audoctl/audoctl/configs"
+	"github.com/audoctl/audoctl/internal/audoctl"
 	"github.com/audoctl/audoctl/internal/shared/tools/gormdb"
 	"github.com/audoctl/audoctl/pkg/fiberserver"
 	"github.com/gofiber/fiber/v3"
@@ -39,8 +40,10 @@ func newFiberServer(cfg *configs.Config, db *gormdb.GormDB, logger zerolog.Logge
 	// Language detection middleware
 	options = append(options, fiberserver.WithLanguageMiddleware())
 
-	// Logging middleware
-	options = append(options, fiberserver.WithMiddleware(createLoggingMiddleware(logger)))
+	// Structured logging middleware (production-ready)
+	if cfg.Log.HTTP.Enabled {
+		options = append(options, fiberserver.WithMiddleware(createStructuredLoggingMiddleware(logger, cfg)))
+	}
 
 	// Security headers middleware
 	if cfg.Security.EnableSecurityHeaders {
@@ -135,6 +138,11 @@ func newFiberServer(cfg *configs.Config, db *gormdb.GormDB, logger zerolog.Logge
 		}))
 	}
 
+	if cfg.HTTPServer.EnableSwagger {
+		options = append(options, fiberserver.WithSwagger("./cmd/audoctl/docs/swagger.json", "/api"))
+		options = append(options, fiberserver.WithOpenAPI("./cmd/audoctl/docs/swagger.json", "/api"))
+	}
+
 	// Create error handler
 	errorHandler := createErrorHandler(logger, cfg.HTTPServer.EnableStackTrace)
 
@@ -144,10 +152,12 @@ func newFiberServer(cfg *configs.Config, db *gormdb.GormDB, logger zerolog.Logge
 	// Register application handlers
 	// TODO: Register your domain-specific handlers here
 	// Example:
-	// server.RegisterHandlers(
-	// 	users.NewHandler(db.Db).Routes()...,
-	// 	events.NewHandler(db.Db).Routes()...,
-	// )
+	server.RegisterHandlers(
+		audoctl.InitHandlers(
+			db.Db,
+			cfg,
+			logger,
+		).Handlers()...)
 
 	return server
 }
@@ -209,49 +219,70 @@ func createErrorHandler(logger zerolog.Logger, includeStackTrace bool) fiber.Err
 	}
 }
 
-// createLoggingMiddleware creates a structured logging middleware
-func createLoggingMiddleware(logger zerolog.Logger) fiber.Handler {
-	return func(c fiber.Ctx) error {
-		start := time.Now()
+// createStructuredLoggingMiddleware creates a production-ready structured logging middleware
+func createStructuredLoggingMiddleware(logger zerolog.Logger, cfg *configs.Config) fiber.Handler {
+	// Create a logger adapter that implements the required interface
+	loggerAdapter := &zerologAdapter{logger: logger}
 
-		// Process request
-		err := c.Next()
-
-		// Log after request
-		duration := time.Since(start)
-		status := c.Response().StatusCode()
-
-		// Get request ID and trace ID from locals
-		requestID := getLocalString(c, "requestid")
-		traceID := getLocalString(c, "traceid")
-
-		// Build log event
-		logEvent := logger.Info()
-		if status >= 400 && status < 500 {
-			logEvent = logger.Warn()
-		} else if status >= 500 {
-			logEvent = logger.Error()
-		}
-
-		logEvent.
-			Str("method", c.Method()).
-			Str("path", c.Path()).
-			Str("ip", c.IP()).
-			Int("status", status).
-			Dur("duration", duration).
-			Str("user_agent", string(c.Request().Header.UserAgent())).
-			Str("request_id", requestID).
-			Str("trace_id", traceID).
-			Int("response_size", len(c.Response().Body()))
-
-		if err != nil {
-			logEvent.Err(err)
-		}
-
-		logEvent.Msg("HTTP request")
-
-		return err
+	// Build skip paths from config
+	skipPaths := cfg.Log.HTTP.SkipPaths
+	if skipPaths == nil {
+		skipPaths = []string{}
 	}
+
+	// Add default skip paths if health/metrics are enabled
+	if cfg.HTTPServer.EnableHealthCheck {
+		skipPaths = append(skipPaths, cfg.HTTPServer.HealthCheckPath)
+	}
+	if cfg.HTTPServer.EnableMetrics {
+		skipPaths = append(skipPaths, cfg.HTTPServer.MetricsPath)
+	}
+
+	return fiberserver.StructuredLoggingMiddleware(fiberserver.StructuredLoggingConfig{
+		Logger:          loggerAdapter,
+		LogRequestBody:  cfg.Log.HTTP.LogRequestBody,
+		LogResponseBody: cfg.Log.HTTP.LogResponseBody,
+		SkipPaths:       skipPaths,
+		SlowThreshold:   cfg.Log.HTTP.SlowThreshold,
+		MaxBodyLogSize:  cfg.Log.HTTP.MaxBodyLogSize,
+	})
+}
+
+// zerologAdapter adapts zerolog.Logger to the interface expected by StructuredLoggingMiddleware
+type zerologAdapter struct {
+	logger zerolog.Logger
+}
+
+func (z *zerologAdapter) Info(msg string, args map[string]any) {
+	event := z.logger.Info()
+	for key, value := range args {
+		event = event.Interface(key, value)
+	}
+	event.Msg(msg)
+}
+
+func (z *zerologAdapter) Warn(msg string, args map[string]any) {
+	event := z.logger.Warn()
+	for key, value := range args {
+		event = event.Interface(key, value)
+	}
+	event.Msg(msg)
+}
+
+func (z *zerologAdapter) Error(msg string, args map[string]any) {
+	event := z.logger.Error()
+	for key, value := range args {
+		event = event.Interface(key, value)
+	}
+	event.Msg(msg)
+}
+
+func (z *zerologAdapter) Debug(msg string, args map[string]any) {
+	event := z.logger.Debug()
+	for key, value := range args {
+		event = event.Interface(key, value)
+	}
+	event.Msg(msg)
 }
 
 // getLocalString safely retrieves a string value from fiber.Ctx locals
@@ -270,18 +301,18 @@ func printServerInfo(cfg *configs.Config) {
 	fmt.Printf("╔═══════════════════════════════════════════════════════════╗\n")
 	fmt.Printf("║                   AUDOCTL SERVER                          ║\n")
 	fmt.Printf("╠═══════════════════════════════════════════════════════════╣\n")
-	fmt.Printf("║ Service:     %-45s ║\n", cfg.Application.Name)
-	fmt.Printf("║ Version:     %-45s ║\n", cfg.Application.Version)
-	fmt.Printf("║ Environment: %-45s ║\n", cfg.Log.Env)
-	fmt.Printf("║ Address:     %-45s ║\n", fmt.Sprintf("http://%s:%d", cfg.HTTPServer.Host, cfg.HTTPServer.Port))
-	fmt.Printf("║ API Base:    %-45s ║\n", "/api")
+	fmt.Printf("║ Service:     %-44s ║\n", cfg.Application.Name)
+	fmt.Printf("║ Version:     %-44s ║\n", cfg.Application.Version)
+	fmt.Printf("║ Environment: %-44s ║\n", cfg.Log.Env)
+	fmt.Printf("║ Address:     %-44s ║\n", fmt.Sprintf("http://%s:%d", cfg.HTTPServer.Host, cfg.HTTPServer.Port))
+	fmt.Printf("║ API Base:    %-44s ║\n", "/api")
 	fmt.Printf("╠═══════════════════════════════════════════════════════════╣\n")
-	fmt.Printf("║ Health:      %-45s ║\n", cfg.HTTPServer.HealthCheckPath)
+	fmt.Printf("║ Health:      %-44s ║\n", cfg.HTTPServer.HealthCheckPath)
 	if cfg.HTTPServer.EnableMetrics {
-		fmt.Printf("║ Metrics:     %-45s ║\n", cfg.HTTPServer.MetricsPath)
+		fmt.Printf("║ Metrics:     %-44s ║\n", cfg.HTTPServer.MetricsPath)
 	}
 	if cfg.HTTPServer.EnablePprofEndpoints {
-		fmt.Printf("║ Profiling:   %-45s ║\n", "/debug/pprof")
+		fmt.Printf("║ Profiling:   %-44s ║\n", "/debug/pprof")
 	}
 	fmt.Printf("╠═══════════════════════════════════════════════════════════╣\n")
 	fmt.Printf("║ Features:                                                 ║\n")

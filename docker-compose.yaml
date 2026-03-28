@@ -18,40 +18,63 @@ services:
       # Application
       NAME: Audoctl
       VERSION: ${VERSION:-1.0.0}
-      
+
+      # Config file
+      AUDOCTL_CONFIG: /home/audoctl/config.yaml
+
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-info}
       LOG_ENV: ${LOG_ENV:-production}
-      
+
       # Database (SQLite by default)
       DB_DRIVER: sqlite
       DB_DSN: /data/audoctl.db
-      
+
       # HTTP Server
       HTTP_HOST: 0.0.0.0
       HTTP_PORT: 8080
       HTTP_ENABLE_COMPRESSION: true
       HTTP_ENABLE_REQUEST_ID: true
       HTTP_ENABLE_HEALTH_CHECK: true
-      
+
       # CORS
       CORS_ENABLED: true
       CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-*}
-      
+
       # Security
       SECURITY_ENABLE_SECURITY_HEADERS: true
+
     volumes:
       - audoctl-data:/data
-      # Mount config file if you want to override
-      # - ./config.yaml:/home/audoctl/config.yaml:ro
+      - ./config.development.yaml:/home/audoctl/config.yaml:ro
+
     networks:
       - audoctl-network
+
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    security_opt:
+      - no-new-privileges:true
+
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 3s
       retries: 3
-      start_period: 5s
+      start_period: 10s
 
   # PostgreSQL (optional - uncomment to use)
   # postgres:

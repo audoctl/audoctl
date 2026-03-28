@@ -6,20 +6,20 @@ import (
 )
 
 type Database struct {
-	Driver string `yaml:"driver" env:"DRIVER"`
+	Driver string `yaml:"driver" env:"DRIVER, overwrite"`
 
-	Host     string `yaml:"host" env:"HOST"`
-	Port     int    `yaml:"port" env:"PORT"`
-	User     string `yaml:"user" env:"USER"`
-	Password string `yaml:"password" env:"PASSWORD"`
-	Name     string `yaml:"name" env:"NAME"`
+	Host     string `yaml:"host" env:"HOST, overwrite"`
+	Port     int    `yaml:"port" env:"PORT, overwrite"`
+	User     string `yaml:"user" env:"USER, overwrite"`
+	Password string `yaml:"password" env:"PASSWORD, overwrite"`
+	Name     string `yaml:"name" env:"NAME, overwrite"`
 
-	SSLMode     string `yaml:"ssl_mode" env:"SSL_MODE"`           // disable, require, verify-ca, verify-full
-	SSLCert     string `yaml:"ssl_cert" env:"SSL_CERT"`           // client certificate (client.crt)
-	SSLKey      string `yaml:"ssl_key" env:"SSL_KEY"`             // client key (client.key)
-	SSLRootCert string `yaml:"ssl_root_cert" env:"SSL_ROOT_CERT"` // root certificate (ca.crt)
+	SSLMode     string `yaml:"ssl_mode" env:"SSL_MODE, overwrite"`           // disable, require, verify-ca, verify-full
+	SSLCert     string `yaml:"ssl_cert" env:"SSL_CERT, overwrite"`           // client certificate (client.crt)
+	SSLKey      string `yaml:"ssl_key" env:"SSL_KEY, overwrite"`             // client key (client.key)
+	SSLRootCert string `yaml:"ssl_root_cert" env:"SSL_ROOT_CERT, overwrite"` // root certificate (ca.crt)
 
-	DSN string `yaml:"dsn" env:"DSN"`
+	DSN string `yaml:"dsn" env:"DSN, overwrite"`
 }
 
 func (db *Database) GetConnectionString() string {

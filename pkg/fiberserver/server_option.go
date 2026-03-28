@@ -1,16 +1,19 @@
 package fiberserver
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/audoctl/audoctl/pkg/fiberserver/handler"
+	"github.com/gofiber/contrib/v3/swaggerui"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/basicauth"
 	"github.com/gofiber/fiber/v3/middleware/compress"
 	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/gofiber/fiber/v3/middleware/limiter"
 	"github.com/gofiber/fiber/v3/middleware/pprof"
+	"github.com/gofiber/fiber/v3/middleware/static"
 )
 
 type ServerOpt func(s *Server)
@@ -321,5 +324,28 @@ func ApplyCommonMiddleware(includeDebug bool, corsAllowOrigins string) ServerOpt
 				Level: compress.Level(s.cfg.CompressLevel),
 			}))
 		}
+	}
+}
+
+// WithSwagger adds Swagger middleware
+func WithSwagger(swaggerFilePath, baseRoute string) ServerOpt {
+	return func(s *Server) {
+		cfg := swaggerui.Config{
+			BasePath: baseRoute,
+			FilePath: swaggerFilePath,
+			Path:     "swagger",
+			Title:    "Swagger Audoctl API Docs",
+		}
+		s.app.Use(swaggerui.New(cfg))
+	}
+}
+
+// WithSwagger adds swagger to server
+func WithOpenAPI(swaggerFilePath, baseRoute string) ServerOpt {
+	return func(s *Server) {
+		s.app.Get(fmt.Sprintf("%s/swagger/swagger.json", baseRoute), static.New(swaggerFilePath))
+		s.app.Get(fmt.Sprintf("%s/doc", baseRoute), func(c fiber.Ctx) error {
+			return c.Type("html").SendString(htmlRapidoc)
+		})
 	}
 }

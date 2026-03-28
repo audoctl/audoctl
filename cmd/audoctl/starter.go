@@ -27,8 +27,8 @@ func StartCtl(ctx context.Context, cfg *configs.Config) graceful.StopFn {
 		Str("env", cfg.Log.Env).
 		Msg("Starting application")
 
-	// Initialize database
-	gormLogger := gormdb.NewGormLogger(loggerWrapper)
+	// Initialize database with logging configuration
+	gormLogger := gormdb.NewGormLogger(loggerWrapper, cfg.Log.Database)
 
 	db, err := gormdb.Connect(&cfg.Database, gormLogger)
 	if err != nil {

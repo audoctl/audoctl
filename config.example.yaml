@@ -1,67 +1,61 @@
-# Audoctl Configuration File
-# This is a production-ready configuration with sensible defaults
+# Audoctl Configuration Example
+# This file demonstrates all available configuration options
+
+# Application settings
+application:
+  name: "Audoctl"
+  version: "1.0.0"
 
 # Database configuration
 database:
-  driver: sqlite        # Options: postgres, mysql, sqlite
-  host: localhost
+  driver: "postgres"  # postgres, mysql, sqlite
+  host: "localhost"
   port: 5432
-  user: audoctl
-  password: ""
-  name: audoctl
-  ssl_mode: disable
-  dsn: "./temp/audoctl.db"     # For SQLite
+  user: "audoctl"
+  password: "your-password"
+  name: "audoctl"
+  ssl_mode: "disable"  # disable, require, verify-ca, verify-full
 
 # Logging configuration
 log:
-  level: "debug"  # debug, info, warn, error
+  level: "info"  # debug, info, warn, error
   env: "dev"     # dev, staging, production
-
+  
   # Database logging
   database:
     enabled: true
-    log_level: "info"  # silent, error, warn, info
+    log_level: "warn"  # silent, error, warn, info
     slow_threshold: 1s  # Log queries slower than this threshold
     ignore_not_found: true
     parameterized_queries: false  # Set to true to log queries with ? placeholders
-
+  
   # HTTP request/response logging
   http:
     enabled: true
-    log_level: "debug"  # debug, info, warn, error
+    log_level: "info"  # debug, info, warn, error
     log_request_body: false   # Set to true to log request bodies (be careful with sensitive data)
     log_response_body: false  # Set to true to log response bodies
     slow_threshold: 5s        # Log requests slower than this as warning
     max_body_log_size: 1024   # Max bytes to log for request/response body
     skip_paths:               # Paths to skip logging (auto-includes /health and /metrics)
-
-      # - "/ping"
+      - "/ping"
       # - "/metrics"
       # - "/health"
 
-# Application metadata
-application:
-  name: Audoctl
-  version: 1.0.0
-
 # HTTP Server configuration
 http_server:
-  host: 0.0.0.0
-  port: 8080
-
+  host: "0.0.0.0"
+  port: 3000
+  
   # Timeouts
   read_timeout: 10s
   write_timeout: 10s
   idle_timeout: 120s
-
-  # Body limits (10MB default)
-  body_limit: 10485760
-  max_header_bytes: 8192
-
-  # Buffer sizes
-  read_buffer_size: 8192
-  write_buffer_size: 8192
-
+  
+  # Body limits
+  body_limit: 10485760  # 10MB
+  max_header_bytes: 8192  # 8KB
+  
   # Performance
   prefork: false
   concurrency: 262144
@@ -69,50 +63,49 @@ http_server:
   disable_keepalive: false
   stream_request_body: false
   disable_preparse_multipart: true
-
+  
   # Compression
   enable_compression: true
-  compress_level: 1
-
+  compress_level: 1  # 1=fast, 9=best compression
+  
   # Security
   enable_request_id: true
-  request_id_header: X-Request-ID
+  request_id_header: "X-Request-ID"
   trusted_proxies: ""
-  proxy_header: X-Forwarded-For
+  proxy_header: "X-Forwarded-For"
   enable_ip_validation: false
-
+  
   # Rate limiting
   enable_rate_limit: false
   rate_limit_max: 100
   rate_limit_duration: 1m
-
+  
   # Graceful shutdown
   shutdown_timeout: 30s
-
+  
+  # Observability
+  enable_metrics: false
+  metrics_path: "/metrics"
+  enable_health_check: true
+  health_check_path: "/health"
+  enable_pprof: false
+  
   # Development/Debug
   disable_startup_message: false
   enable_print_routes: false
   enable_stack_trace: false
 
-  # Observability
-  enable_metrics: false
-  metrics_path: /metrics
-  enable_health_check: true
-  health_check_path: /health
-  enable_pprof: false
-  enable_swagger: true
-
 # CORS configuration
 cors:
   enabled: true
   allow_origins: "*"
-  allow_methods: GET,POST,PUT,DELETE,PATCH,OPTIONS
-  allow_headers: Origin,Content-Type,Accept,Authorization,X-Request-ID,X-Trace-ID
+  allow_methods: "GET,POST,PUT,DELETE,PATCH,OPTIONS"
+  allow_headers: "Origin,Content-Type,Accept,Authorization,X-Request-ID,X-Trace-ID"
   allow_credentials: false
-  expose_headers: X-Request-ID,X-Trace-ID
+  expose_headers: "X-Request-ID,X-Trace-ID"
   max_age: 3600
 
-# TLS configuration (optional)
+# TLS configuration
 tls:
   enabled: false
   cert_file: ""
@@ -123,20 +116,12 @@ tls:
 security:
   enable_security_headers: true
   xss_protection: "1; mode=block"
-  content_type_nosniff: nosniff
-  x_frame_options: SAMEORIGIN
-  hsts_max_age: 31536000
+  content_type_nosniff: "nosniff"
+  x_frame_options: "SAMEORIGIN"
+  hsts_max_age: 31536000  # 1 year
   hsts_include_subdomains: true
-  content_security_policy: >
-    default-src 'self';
-    script-src 'self' https://unpkg.com 'unsafe-inline' https://cdn.redoc.ly;
-    style-src 'self' https://unpkg.com 'unsafe-inline' https://fonts.googleapis.com;
-    img-src 'self' https://unpkg.com data:;
-    font-src 'self' https://fonts.gstatic.com;
-    connect-src 'self' https://unpkg.com;
-
-  referrer_policy: strict-origin-when-cross-origin
-
-  # API Key authentication (optional)
+  content_security_policy: "default-src 'self'"
+  referrer_policy: "strict-origin-when-cross-origin"
+  
   enable_api_key_auth: false
-  api_key_header: X-API-Key
+  api_key_header: "X-API-Key"

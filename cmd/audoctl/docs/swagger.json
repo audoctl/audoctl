@@ -1,0 +1,311 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "Documentation for Audoctl",
+    "title": "Audoctl API",
+    "version": "1.0.0"
+  },
+  "basePath": "/",
+  "paths": {
+    "/api/v1/events": {
+      "post": {
+        "description": "Create a new event",
+        "tags": [
+          "events"
+        ],
+        "operationId": "CreateEvent",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "actor_id": {
+                  "type": "string",
+                  "x-go-name": "ActorID"
+                },
+                "data": {
+                  "type": "object",
+                  "x-go-name": "Data"
+                },
+                "session_id": {
+                  "type": "string",
+                  "x-go-name": "SessionID"
+                },
+                "source": {
+                  "type": "string",
+                  "x-go-name": "Source"
+                },
+                "type": {
+                  "type": "string",
+                  "x-go-name": "Type"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/EventResponse"
+          },
+          "400": {
+            "$ref": "#/responses/ErrorResponse"
+          },
+          "500": {
+            "$ref": "#/responses/ErrorResponse"
+          }
+        }
+      }
+    },
+    "/api/v1/sessions": {
+      "post": {
+        "description": "Create a new session",
+        "tags": [
+          "sessions"
+        ],
+        "operationId": "CreateSession",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "actor_id": {
+                  "type": "string",
+                  "x-go-name": "ActorID"
+                },
+                "type": {
+                  "type": "string",
+                  "x-go-name": "Type"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/SessionResponse"
+          },
+          "400": {
+            "$ref": "#/responses/ErrorResponse"
+          },
+          "500": {
+            "$ref": "#/responses/ErrorResponse"
+          }
+        }
+      }
+    },
+    "/api/v1/timeline/{session_id}": {
+      "get": {
+        "description": "Get events by session ID",
+        "tags": [
+          "timeline"
+        ],
+        "operationId": "GetEventsBySessionID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "SessionID",
+            "name": "session_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Limit",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Offset",
+            "name": "offset",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/EventsBySessionIDResponse"
+          },
+          "400": {
+            "$ref": "#/responses/ErrorResponse"
+          },
+          "500": {
+            "$ref": "#/responses/ErrorResponse"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Event": {
+      "type": "object",
+      "properties": {
+        "actorId": {
+          "type": "string",
+          "x-go-name": "ActorID"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "CreatedAt"
+        },
+        "data": {
+          "$ref": "#/definitions/EventData"
+        },
+        "id": {
+          "$ref": "#/definitions/ID"
+        },
+        "sessionId": {
+          "type": "string",
+          "x-go-name": "SessionID"
+        },
+        "source": {
+          "$ref": "#/definitions/EventSourceType"
+        },
+        "type": {
+          "$ref": "#/definitions/EventType"
+        }
+      },
+      "x-go-package": "github.com/audoctl/audoctl/internal/model/entity"
+    },
+    "EventData": {
+      "type": "object",
+      "additionalProperties": {},
+      "x-go-package": "github.com/audoctl/audoctl/internal/model/entity"
+    },
+    "EventResponse": {
+      "type": "object",
+      "properties": {
+        "actor_id": {
+          "type": "string",
+          "x-go-name": "ActorID"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "CreatedAt"
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": {},
+          "x-go-name": "Data"
+        },
+        "id": {
+          "$ref": "#/definitions/ID"
+        },
+        "session_id": {
+          "type": "string",
+          "x-go-name": "SessionID"
+        },
+        "source": {
+          "$ref": "#/definitions/EventSourceType"
+        },
+        "type": {
+          "$ref": "#/definitions/EventType"
+        }
+      },
+      "x-go-package": "github.com/audoctl/audoctl/internal/audoctl/modules/timeline"
+    },
+    "EventSourceType": {
+      "type": "string",
+      "x-go-package": "github.com/audoctl/audoctl/internal/model/enum"
+    },
+    "EventType": {
+      "type": "string",
+      "x-go-package": "github.com/audoctl/audoctl/internal/model/enum"
+    },
+    "ID": {
+      "type": "string",
+      "x-go-package": "github.com/audoctl/audoctl/internal/model/obj/id"
+    },
+    "Session": {
+      "type": "object",
+      "properties": {
+        "ActorID": {
+          "type": "string"
+        },
+        "Type": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "CreatedAt"
+        },
+        "id": {
+          "$ref": "#/definitions/ID"
+        }
+      },
+      "x-go-package": "github.com/audoctl/audoctl/internal/model/entity"
+    }
+  },
+  "responses": {
+    "ErrorResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Code"
+          },
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          }
+        }
+      }
+    },
+    "EventResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "$ref": "#/definitions/Event"
+          }
+        }
+      }
+    },
+    "EventsBySessionIDResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/EventResponse"
+            },
+            "x-go-name": "Events"
+          }
+        }
+      }
+    },
+    "SessionResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "session": {
+            "$ref": "#/definitions/Session"
+          }
+        }
+      }
+    }
+  }
+}

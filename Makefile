@@ -102,4 +102,7 @@ migrate-down: ## Run database migrations (down)
 	@echo "Running migrations down..."
 	@./bin/$(BINARY_NAME) migrate down
 
+generate:
+	swagger generate spec ./cmd/audoctl/docs/ -o ./cmd/audoctl/docs/swagger.json --scan-models
+
 .DEFAULT_GOAL := help

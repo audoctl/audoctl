@@ -1,0 +1,37 @@
+package session
+
+import (
+	"github.com/audoctl/audoctl/pkg/errs"
+	"github.com/audoctl/audoctl/pkg/fiberserver/response"
+	"github.com/gofiber/fiber/v3"
+)
+
+type Handler struct {
+	service Service
+}
+
+func NewHandler(service Service) Handler {
+	return Handler{
+		service: service,
+	}
+}
+
+func (h Handler) RegisterRoutes(r fiber.Router) {
+	events := r.Group("/v1/sessions")
+
+	events.Post("/", h.CreateSession)
+}
+
+func (h Handler) CreateSession(c fiber.Ctx) error {
+	var req CreateSessionRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return errs.BadRequest("Invalid request body")
+	}
+
+	session, err := h.service.CreateSession(c.Context(), req)
+	if err != nil {
+		return err
+	}
+
+	return response.Created(c, session)
+}
